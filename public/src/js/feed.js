@@ -109,21 +109,14 @@ fetch(url)
     updateUI(dataArray);
   });
 
-if('caches' in window){
-  caches.match(url)
-    .then( res => {
-      if(res){
-        return res.json();
-      }
-    })
+
+if('indexedDB' in window){
+  readAllData('posts')
     .then(data => {
-      console.log('from cache:', data);
-      if(!networkDataReceived) {
-        var dataArray = [];
-        for (var key in data){
-          dataArray.push(data[key])
-        }
-        updateUI(dataArray);
+      if(!networkDataReceived){
+        console.log('from cache:', data);
+        updateUI(data);
+
       }
     })
 }
