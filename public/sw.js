@@ -4,7 +4,7 @@ importScripts('/src/js/idb.js');
 importScripts('/src/js/utility.js');
 
 
-const CACHE_STATIC_NAME = 'static-v18';
+const CACHE_STATIC_NAME = 'static-v20';
 const CACHE_DYNAMIC_NAME = 'dynamic-v1';
 const STATIC_FILES = [
   '/',
@@ -184,3 +184,42 @@ self.addEventListener('fetch', function(event) {
 //     caches.match(event.request)
 //   );
 // });
+
+self.addEventListener('sync', function(event) {
+  console.log('[Service Woirker] background syncing', event);
+  if(event.tag === 'sync-new-posts'){
+    console.log('[Service Worker] Syncing new Posts');
+    event.waitUntil(
+    readAllData('sync-posts')
+        .then(data => {
+          for (let dt of data) {
+            const { id, title, location} = dt;
+            fetch('https://pwagram-66b3d.firebaseio.com/posts.json', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+              },
+              body: JSON.stringify({ 
+                  id,
+                  title,
+                  location,
+                  image: 'https://firebasestorage.googleapis.com/v0/b/pwagram-66b3d.appspot.com/o/sf-boat.jpg?alt=media&token=2c41f761-babd-45be-a4dc-2c176acd904e'
+                }),
+            })
+            .then( res => {
+              console.log('sent data', res);
+              if(res.ok){
+                deleteItemFromData('sync-posts', id);
+              }
+            
+            })
+
+          }
+        })
+        .catch( err => {
+          console.log('[Service Worker] error sending synced data', err)
+        })
+    );
+  }
+});
