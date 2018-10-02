@@ -4,7 +4,7 @@ importScripts('/src/js/idb.js');
 importScripts('/src/js/utility.js');
 
 
-const CACHE_STATIC_NAME = 'static-v20';
+const CACHE_STATIC_NAME = 'static-v21';
 const CACHE_DYNAMIC_NAME = 'dynamic-v1';
 const STATIC_FILES = [
   '/',
@@ -194,7 +194,7 @@ self.addEventListener('sync', function(event) {
         .then(data => {
           for (let dt of data) {
             const { id, title, location} = dt;
-            fetch('https://pwagram-66b3d.firebaseio.com/posts.json', {
+            fetch('https://us-central1-pwagram-66b3d.cloudfunctions.net/storePostData', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -208,9 +208,14 @@ self.addEventListener('sync', function(event) {
                 }),
             })
             .then( res => {
-              console.log('sent data', res);
+              console.log('[Service Worker] fetch sync response', res);
               if(res.ok){
-                deleteItemFromData('sync-posts', id);
+                res.json()
+                  .then(resData => {
+                    console.log('[Service Worker] fetch sync response data', resData);
+                    deleteItemFromData('sync-posts', resData.id);
+                  })
+                
               }
             
             })

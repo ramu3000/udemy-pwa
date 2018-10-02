@@ -124,7 +124,7 @@ if('indexedDB' in window){
 }
 
 function sendData() {
-  fetch('https://pwagram-66b3d.firebaseio.com/posts.json', {
+  fetch('https://us-central1-pwagram-66b3d.cloudfunctions.net/storePostData', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -139,7 +139,7 @@ function sendData() {
   })
   .then( res => {
     console.log('sent data', res);
-    updateUI();
+    updateUI(data);
   })
 }
 
