@@ -30,6 +30,8 @@ exports.storePostData = functions.https.onRequest((req, res) => {
       
     })
     .then(subscriptions => {
+      const myPromises = [];
+
       subscriptions.forEach(sub => {
         const pushConfig = {
           endpoint: sub.val().endpoint,
@@ -38,15 +40,20 @@ exports.storePostData = functions.https.onRequest((req, res) => {
             p256dh: sub.val().keys.p256dh
           }
         };
-        webpush.sendNotification(pushConfig, JSON.stringify({
-          title,
-          content: location,
-          openUrl: '/help'
-        }))
-        .catch(err => {
-          console.log(err);
+        myPromises.push(
+          webpush.sendNotification(pushConfig, JSON.stringify({
+            title,
+            content: location,
+            openUrl: '/help'
         })
+        ))
       })
+    return Promise.all(myPromises);
+    })
+    .catch(err => {
+      console.log(err);
+    })
+    .then( () => {
       return res.status(201).json({message: 'Data stored', id: req.body.id});
     })
     .catch(err => {
