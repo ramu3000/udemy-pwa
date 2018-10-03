@@ -1,6 +1,9 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const cors = require('cors')({origin: true});
+const webpush = require('web-push');
+
+ 
 
 // // Create and Deploy Your First Cloud Functions
 // // https://firebase.google.com/docs/functions/write-firebase-functions
@@ -22,6 +25,28 @@ exports.storePostData = functions.https.onRequest((req, res) => {
       image
     })
     .then(() => {
+      webpush.setVapidDetails('mailto:rasmus.laine@gmail.com','BNylVnFADyxx0HO4W_cxUc9q8_RIHKZ9N0w28dyJUa5oXWkhnfC4aJ3EDXjpHdWADChseT-_zu6zTwsisD9t2Ws', functions.config().vapid.secret_key)
+      return admin.database().ref('subscriptions').once('value');
+      
+    })
+    .then(subscriptions => {
+      subscriptions.forEach(sub => {
+        const pushConfig = {
+          endpoint: sub.val().endpoint,
+          keys: {
+            auth: sub.val().keys.auth,
+            p256dh: sub.val().keys.p256dh
+          }
+        };
+        webpush.sendNotification(pushConfig, JSON.stringify({
+          title,
+          content: location,
+          openUrl: '/help'
+        }))
+        .catch(err => {
+          console.log(err);
+        })
+      })
       return res.status(201).json({message: 'Data stored', id: req.body.id});
     })
     .catch(err => {

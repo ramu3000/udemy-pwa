@@ -228,3 +228,63 @@ self.addEventListener('sync', function(event) {
     );
   }
 });
+
+self.addEventListener('notificationclick', event => {
+  const notification = event.notification;
+  var action = event.action;
+  console.log(notification);
+
+  if(action === 'confirm') {
+    console.log('Confirm was chosen');
+    notification.close();
+  } else {
+    console.log(action);
+    event.waitUntil(
+      clients.matchAll()
+        .then(clis => {
+          var client = clis.find(c => {
+            return c.visibilty === 'visible';
+          });
+
+          if(client !== undefined){
+            client.navigate(notification.data.url);
+            client.focus();
+          } else {
+            clients.openWindow(notification.data.url);
+          }
+          console.log('notification data:', notification.data.url)
+          notification.close();
+        })
+    );
+  }
+
+})
+
+
+/*
+* notification closed, user did not interact with notification
+* main purpose might be for analytics to get info why this content is not interesting
+*/
+self.addEventListener('notificationclose', event => {
+  console.log('notification was close', event);
+})
+
+self.addEventListener('push', event => {
+  console.log('Push notification received', event);
+  var data = {title: 'New!', content: 'Somethin new happened!', openUrl: '/'}
+  if(event.data) {
+    data = JSON.parse(event.data.text());
+  }
+  console.log('event data:', event.data.json(), 'new data:', data);
+  var options = {
+    body: data.content,
+    icon: '/src/images/icons/app-icon-96x96.png',
+    badge: '/src/images/icons/app-icon-96x96.png',
+    data: {
+      url: data.openUrl
+    }
+  };
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
+});
