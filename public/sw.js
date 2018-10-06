@@ -4,14 +4,15 @@ importScripts('/src/js/idb.js');
 importScripts('/src/js/utility.js');
 
 
-const CACHE_STATIC_NAME = 'static-v21';
-const CACHE_DYNAMIC_NAME = 'dynamic-v1';
+const CACHE_STATIC_NAME = 'static-v43';
+const CACHE_DYNAMIC_NAME = 'dynamic-v4';
 const STATIC_FILES = [
   '/',
   '/index.html',
   '/offline.html',
   '/src/js/app.js',
   '/src/js/feed.js',
+  '/src/js/utility.js',
   '/src/js/idb.js',
   '/src/js/promise.js',
   '/src/js/fetch.js',
@@ -193,19 +194,19 @@ self.addEventListener('sync', function(event) {
     readAllData('sync-posts')
         .then(data => {
           for (let dt of data) {
-            const { id, title, location} = dt;
+            const postData = new FormData();
+            const { id, title, location, picture, rawLocation } = dt;
+            
+            postData.append('id', id)
+            postData.append('title', title)
+            postData.append('location', location)
+            postData.append('rawLocationLat', rawLocation.lat)
+            postData.append('rawLocationLng', rawLocation.lng)
+            postData.append('file', picture, dt.id + '.png')
+            
             fetch('https://us-central1-pwagram-66b3d.cloudfunctions.net/storePostData', {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-              },
-              body: JSON.stringify({ 
-                  id,
-                  title,
-                  location,
-                  image: 'https://firebasestorage.googleapis.com/v0/b/pwagram-66b3d.appspot.com/o/sf-boat.jpg?alt=media&token=2c41f761-babd-45be-a4dc-2c176acd904e'
-                }),
+              body: postData
             })
             .then( res => {
               console.log('[Service Worker] fetch sync response', res);

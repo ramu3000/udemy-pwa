@@ -28,8 +28,8 @@ admin.initializeApp({
 });
 
 exports.storePostData = functions.https.onRequest((req, res) => {
-  cors( req, res, () => {
-    const uuid = UUID();
+  cors(req, res, () => {
+    var uuid = UUID();
     
     const busboy = new Busboy({ headers: req.headers });
     // These objects will store the values (file + fields) extracted from busboy
@@ -53,16 +53,18 @@ exports.storePostData = functions.https.onRequest((req, res) => {
     
     busboy.on("finish", () => { 
       var bucket = gcs.bucket('pwagram-66b3d.appspot.com');
-      const { id, title, location } = fields;
-
-      bucket.upload(upload.file, {
-        uploadType: 'media',
-        metadata: {
+      const { id, title, location, rawLocationLat, rawLocationLng } = fields;
+      console.log('uploded file')
+      bucket.upload(
+        upload.file, 
+        {
+          uploadType: 'media',
           metadata: {
-            contentType: upload.type,
-            firebaseStorageDownloadTokens: uuid
+            metadata: {
+              contentType: upload.type,
+              firebaseStorageDownloadTokens: uuid
+            }
           }
-        }
         }, (err, uploadedFile) => {
           if(!err){   
             admin
@@ -72,6 +74,10 @@ exports.storePostData = functions.https.onRequest((req, res) => {
                 id,
                 title,
                 location,
+                rawLocation: {
+                  lat: rawLocationLat, 
+                  lng: rawLocationLng
+                },
                 image: 
                   'https://firebasestorage.googleapis.com/v0/b/' + 
                   bucket.name + 
